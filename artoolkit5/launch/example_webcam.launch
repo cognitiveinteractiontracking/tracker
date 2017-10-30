@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node type="artoolkit5_node" name="artoolkit5_example" pkg="artoolkit5" respawn="false" required="true" > <!--output="screen">-->
+    <param name="gui" value="1" />
+    <param name="topic_in_image" type="string" value="/usb_cam/image_raw" />
+    <param name="cpara" type="string" value="/opt/artoolkit5/bin/camera_para.dat" />
+    <param name="topic_out_odom" type="string" value="/head_camera/odom" />
+    <param name="patt_width" value="99" /> <!--For calibration 250-->
+    <param name="patt_ratio" value="0.5" />
+<!--     <param name="patt_size" value="16" /> -->
+<!--     <param name="patt_count_max" value="50" /> -->
+    <param name="boarder_t" value="0.5" />
+    <param name="matrix_code_type" type="string" value="AR_MATRIX_CODE_3x3" />
+    <param name="labeling_mode" type="string" value="AR_LABELING_BLACK_REGION" />
+    <param name="pattern_detection_mode" type="string" value="AR_MATRIX_CODE_DETECTION" />
+    <param name="log_level" type="string" value="INFO" />
+    <param name="labeling_thresh_mode" type="string" value="AR_LABELING_THRESH_MODE_AUTO_OTSU" />
+    <param name="window_name" type="string" value="head_camera" />
+    <param name="parent_frame_id" type="string" value="head_camera" />
+<!--     <param name="multimarker_patt_names" type="string" value="$(find artoolkit5)/Data/multi-barcode-4x3.dat" /> -->
+    <param name="multimarker_patt_names" type="string" value="$(find artoolkit5)/Data/multi-barcode-twb_4x2_A1.dat" />
+  </node>
+  
+  <node pkg="usb_cam" type="usb_cam_node" name="usb_cam">
+    <param name="video_device" value="/dev/video0"/>
+    <param name="image_width"  value="1280"/>
+    <param name="image_height" value="720"/>
+    <param name="pixel_format" value="yuyv"/>
+  </node>
+  
+</launch>

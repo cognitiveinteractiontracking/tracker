@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <arg name="CAM" default="4"/>
+  <arg name="camera_parameter_ns" default="config"/>
+  <arg name="LOC" default="$(find artoolkit5)"/>
+
+  <node type="artoolkit5_node" name="artoolkit5_cam$(arg CAM)" pkg="artoolkit5" respawn="false" output="screen">
+    <param name="gui" value="1" />
+    <param name="topic_in_image" type="string" value="/genicam_cam$(arg CAM)/cam" />
+    <param name="cpara" type="string" value="$(arg LOC)/calib/camera$(arg CAM)twb_para.dat" />
+    <param name="topic_out_odom" type="string" value="/cam/odom" />
+    <param name="patt_width" value="99" /> <!--For calibration 250-->
+    <param name="patt_ratio" value="0.5" />
+<!--     <param name="patt_size" value="16" /> -->
+<!--     <param name="patt_count_max" value="50" /> -->
+    <param name="boarder_t" value="0.5" />
+    <param name="matrix_code_type" type="string" value="AR_MATRIX_CODE_3x3_PARITY65" />
+    <param name="labeling_mode" type="string" value="AR_LABELING_BLACK_REGION" />
+    <param name="pattern_detection_mode" type="string" value="AR_MATRIX_CODE_DETECTION" />
+    <param name="log_level" type="string" value="INFO" />
+    <param name="labeling_thresh_mode" type="string" value="AR_LABELING_THRESH_MODE_AUTO_OTSU" />
+    <param name="window_name" type="string" value="cam$(arg CAM)" />
+    <param name="parent_frame_id" type="string" value="cam$(arg CAM)" />
+  </node>
+  
+</launch>
