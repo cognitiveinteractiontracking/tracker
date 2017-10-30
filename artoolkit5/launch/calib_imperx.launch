@@ -19,7 +19,7 @@
     <param name="labeling_mode" type="string" value="AR_LABELING_BLACK_REGION" />
     <param name="pattern_detection_mode" type="string" value="AR_MATRIX_CODE_DETECTION" />
     <param name="log_level" type="string" value="INFO" />
-    <param name="labeling_thresh_mode" type="string" value="AR_LABELING_THRESH_MODE_AUTO_OTSU" />
+    <param name="labeling_thresh_mode" type="string" value="AR_LABELING_THRESH_MODE_AUTO_ADAPTIVE" />
     <param name="window_name" type="string" value="cam$(arg CAM)" />
     <param name="parent_frame_id" type="string" value="cam$(arg CAM)" />
     <param name="multimarker_patt_names" type="string" value="$(find artoolkit5)/Data/multi-barcode-twb_4x2_A0.dat" />
