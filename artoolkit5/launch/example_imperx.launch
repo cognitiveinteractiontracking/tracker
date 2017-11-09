@@ -7,7 +7,7 @@
 
   <node type="artoolkit5_node" name="artoolkit5_cam$(arg CAM)" pkg="artoolkit5" respawn="false" output="screen">
     <param name="gui" value="1" />
-    <param name="topic_in_image" type="string" value="/genicam_cam$(arg CAM)/cam" />
+    <param name="topic_in_image" type="string" value="/genicam_cam$(arg CAM)/image" />
     <param name="cpara" type="string" value="$(arg LOC)/calib/camera$(arg CAM)twb_para.dat" />
     <param name="topic_out_odom" type="string" value="/cam/odom" />
     <param name="patt_width" value="99" /> <!--For calibration 250-->
