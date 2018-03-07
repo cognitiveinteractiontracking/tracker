@@ -165,12 +165,12 @@ const int objectnum = 64;  // This is the amount of maximum possible marker IDs
 std::vector<bool> markerVisible(objectnum, false);
 
 // Topics for the data
-static std::string topicInImage, topicOutOdom;
+static std::string topicInImage, topicOutOdom, topicOutPixel;
 static std::string parentFrameId;
 
 // Gui Options
 static int gui = 0;
-static std::string windowName("Tracking");
+static std::string windowName("ARToolKit-Tracking");
 
 // Pattern Width in mm
 static ARdouble gPatt_width = 80.0;
@@ -213,6 +213,7 @@ static cv::Mat imageColorFromCallback; // Three channel image (don't care if RGB
 static cv::Mat imageGrayFromCallback; // Single Luminance channel
 std_msgs::Header header;
 std::atomic<bool> newDataArrived(false);
+
 void callbackImage(sensor_msgs::ImageConstPtr msg) {
 
   cv_bridge::CvImageConstPtr cv_ptr;
@@ -258,6 +259,7 @@ void callbackImage(sensor_msgs::ImageConstPtr msg) {
 }
 
 static std::vector<ros::Publisher> pubOdom;
+static std::vector<ros::Publisher> pubOdomPixel;
 static ros::Subscriber sub;
 int main(int argc, char** argv) {
   char glutGamemode[32];
@@ -274,12 +276,21 @@ int main(int argc, char** argv) {
 
   // Allocate the publisher for the maximum number of markers
   pubOdom.resize(objectnum);
+  pubOdomPixel.resize(objectnum);
   int idx = 0;
   for (auto it = pubOdom.begin(); it != pubOdom.end(); ++it, ++idx) {
     std::stringstream ss;
     ss << n.getNamespace() << std::string("/") << topicOutOdom << std::string("/") << idx;
     *it = n.advertise<nav_msgs::Odometry>(ss.str(), 1);
   }
+
+  idx = 0;
+  for (auto it = pubOdomPixel.begin(); it != pubOdomPixel.end(); ++it, ++idx) {
+    std::stringstream ss;
+    ss << n.getNamespace() << std::string("/") << topicOutPixel << std::string("/") << idx;
+    *it = n.advertise<nav_msgs::Odometry>(ss.str(), 1);
+  }
+
   // Allocate extra publishers for the multimarkers
   for (int i = 0; i <  multimarker_patt_names.size(); ++i) {
     std::stringstream ss;
@@ -375,6 +386,7 @@ static int programOptions(ros::NodeHandle &n) {
   n.param<std::string>("topic_in_image", topicInImage, "/genicam/cam4"); // Video parameter for the camera
   n.param<std::string>("cpara", cparam_t, "/tmp/file"); // Camera parameter file for the camera
   n.param<std::string>("topic_out_odom", topicOutOdom, "/odom"); // scope for sending the odometries
+  n.param<std::string>("topic_out_pixel", topicOutPixel, "/pixel"); // scope for sending the pixel data
   n.param<double>("patt_width",pattWidth_t, 80); // Marker pattern width in mm
   n.param<double>("patt_ratio",pattRatio_t, AR_PATT_RATIO); // Specify the proportion of the marker width/height, occupied by the marker pattern. Range (0.0 - 1.0) (not inclusive) (I.e. 1.0 - 2*borderSize). Default value is 0.5.
   n.param<int>("patt_size", gPattSize, AR_PATT_SIZE1); // Specify the number of rows and columns in the pattern space for template (pictorial) markers. Default value 16 (required for compatibility with ARToolKit prior to version 5.2).
@@ -937,7 +949,7 @@ static void mainLoop(void) {
         continue;
 
       if (gARHandle->markerInfo[j].idPatt < objectnum) {
-          nav_msgs::Odometry odom;
+          nav_msgs::Odometry odom, pixel;
           odom.header = header_t;
           odom.child_frame_id = std::string("base_link/") + std::to_string(gARHandle->markerInfo[j].id);
           odom.pose.pose.position.x = pos[0];
@@ -955,7 +967,12 @@ static void mainLoop(void) {
                 0, 0, 0, 0, .01, 0,
                 0, 0, 0, 0, 0, .01}};
           odom.pose.covariance = covariance;
-          pubOdom.at(gARHandle->markerInfo[j].id).publish(odom);
+        pixel = odom;
+        pixel.pose.pose.position.x = gARHandle->markerInfo[j].pos[0];
+        pixel.pose.pose.position.y = gARHandle->markerInfo[j].pos[1];
+        pixel.pose.pose.position.z = 0;
+        pubOdom.at(gARHandle->markerInfo[j].id).publish(odom);
+        pubOdomPixel.at(gARHandle->markerInfo[j].id).publish(pixel);
       }
       // i < 4: a marker got 4 vertices
 //        for (int i = 0; i < 4; i++) {

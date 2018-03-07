@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<config>
+	<data id="title" type="string">Configuration file for Configurable ID: fid</data>
+	<section id="pose">
+		<data id="algorithm" type="string">SimplexSampling</data>
+		<section id="RANSAC">
+			<data id="algorithm" type="string">HomographyBasedOnly</data>
+			<data id="enable" type="bool">false</data>
+			<data id="num points for model" type="float">4</data>
+			<data id="number of cycles" type="float">20</data>
+			<data id="max projection distance" type="float">10</data>
+		</section>
+		<data id="sampling interval" type="float">0.6</data>
+		<data id="sampling steps" type="int">10</data>
+		<data id="sampling substeps" type="int">1</data>
+		<data id="decrease factor" type="float">0.6</data>
+		<data id="position multiplier" type="float">50</data>
+		<data id="time monitoring" type="bool">false</data>
+		<data id="pose correction" type="bool">false</data>
+	</section>
+	<section id="pp">
+		<data id="filter" type="string">none</data>
+		<data id="mask size" type="string">3x3</data>
+	</section>
+	<data id="contour approximation algorithm" type="string">RDP</data>
+	<data id="optimize edges" type="bool">true</data>
+	<data id="min-rating" type="float">0.4</data>
+	<data id="intersection heuristic" type="bool">true</data>
+	<data id="perpendicular heuristic" type="bool">true</data>
+	<data id="mirror heuristic" type="bool">true</data>
+	<section id="quads">
+		<data id="minimum region size" type="float">40</data>
+		<data id="maximum region size" type="float">2.09715e+06</data>
+		<section id="track times">
+			<data id="on" type="bool">false</data>
+		</section>
+	</section>
+	<section id="thresh">
+		<data id="mask size" type="float">10</data>
+		<data id="global threshold" type="float">0</data>
+		<data id="algorithm" type="string">region mean</data>
+		<data id="invert output" type="bool">false</data>
+	</section>
+	<section id="css">
+		<data id="angle-threshold" type="float">162</data>
+		<data id="rc-coefficient" type="float">1.5</data>
+		<data id="sigma" type="float">4.2</data>
+		<data id="curvature-cutoff" type="float">66</data>
+		<data id="straight-line-threshold" type="float">0.1</data>
+		<data id="accurate" type="bool">false</data>
+		<data id="use opencl" type="bool">false</data>
+	</section>
+	<data id="max tilt" type="float">150</data>
+	<data id="return rejected quads" type="bool">false</data>
+	<data id="max bch errors" type="float">3</data>
+	<data id="match factor" type="float">2</data>
+	<data id="border width" type="float">2</data>
+	<section id="binarize">
+		<data id="threshold" type="float">127</data>
+		<data id="k-means steps" type="float">1</data>
+		<data id="mode" type="string">k-means</data>
+	</section>
+</config>
