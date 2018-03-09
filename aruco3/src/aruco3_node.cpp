@@ -34,7 +34,7 @@ static int gui = 0;
 static int drawCube = 0;
 static int drawAxis = 0;
 static int fps = 30;
-static string windowName = "ArUco2 Tracker";
+static string windowName = "ArUco3 Tracker";
 
 // Image
 static cv::Mat image;
@@ -145,21 +145,11 @@ void initArucoParams() {
 
   CamParam.setParams(cameraMatrix, distorsionCoeff, cv::Size(cameraInfo.height, cameraInfo.width));
 
-  if (dictionary_type == "ARUCO" || dictionary_type == "ARUCO_MIP_36h12" || dictionary_type == "TAG36h11") {
+  if (dictionary_type == "ARUCO" || dictionary_type == "ARUCO_MIP_36h12" || dictionary_type == "TAG36h11" || dictionary_type == "ALL_DICTS") {
     MDetector.setDictionary(aruco::Dictionary::getTypeFromString(dictionary_type), 0.f);
   } else {
     MDetector.setDictionary(dictionary_type, 0.f);
   }
-
-  // FIXED_THRES, ADPT_THRES, CANNY
-  MDetector.setThresholdMethod(aruco::MarkerDetector::ADPT_THRES); //default is ADPT_THRES
-  MDetector.setThresholdParams(7, 7);
-  MDetector.setThresholdParamRange(0, 0);
-  //Specifies a value to indicate the required speed for the internal processes. If you need maximum speed (at the cost of a lower detection rate), use the value 3, If you rather a more precise and slow detection, set it to 0.
-  //Actually, the main differences are that in highspeed mode, we employ setCornerRefinementMethod(NONE) and internally, we use a small canonical image to detect the marker. In low speed mode, we use setCornerRefinementMethod(HARRIS) and a bigger size for the canonical marker image
-  MDetector.setDesiredSpeed(3);
-  // NONE,   SUBPIX, LINES
-  MDetector.setCornerRefinementMethod(aruco::MarkerDetector::LINES); // default is LINES
 
   setCameraInfo = true;
 }

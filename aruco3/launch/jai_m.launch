@@ -3,7 +3,7 @@
 
   <arg name="CAM" default="3"/>
 
-  <node type="aruco2_node" name="aruco2_node$(arg CAM)_2" pkg="aruco2" respawn="false" output="screen">
+  <node type="aruco3_node" name="aruco3_node$(arg CAM)_2" pkg="aruco3" respawn="false" output="screen">
     <param name="topic_in_image" type="string" value="/genicam_cam$(arg CAM)/image_raw"/>
     <param name="image_camera_info" type="string" value="/genicam_cam$(arg CAM)/camera_info"/>
     <param name="topic_out_odom" type="string" value="/cam/odom"/>
@@ -12,8 +12,9 @@
     <param name="draw_axis" value="0"/>
     <param name="marker_size" value="100"/>
     <!--<param name="dictionary" value="$(find aruco2)/dictionary/armarker_parity.dict"/>-->
-    <!--<param name="dictionary" value="ARUCO_MIP_36h12"/>-->
-    <param name="dictionary" value="TAG36h11"/>
+    <param name="dictionary" value="ARUCO_MIP_36h12"/>
+    <!--<param name="dictionary" value="TAG36h11"/>-->
+    <!--<param name="dictionary" value="ALL_DICTS"/>-->
     <param name="verbose" value="1"/>
     <param name="fps" value="50"/>
     <param name="show_threshhold" value="0"/>

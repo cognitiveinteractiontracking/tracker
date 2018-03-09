@@ -93,7 +93,7 @@ void mainLoopTracking() {
   image_icl = icl::core::mat_to_img(&image);
 
   if (verbose)
-    ROS_INFO_STREAM("[" << ros::this_node::getName() << "] " << "time fid:" << d << "[ms] \t detected marker:" << fids.size());
+    ROS_INFO_STREAM("[" << ros::this_node::getName() << "] " << "time fid:" << d << "[s] \t detected marker:" << fids.size());
 
   draw = image_icl;
   draw->linewidth(2);
