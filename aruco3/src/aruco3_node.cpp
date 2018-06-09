@@ -19,13 +19,15 @@
 using namespace std;
 
 // Topics for the data
-static string topicInImage, topicOutOdom, topicCameraInfo;
+static string topicInImage, topicOutOdom, topicOutPixel, topicCameraInfo;
 static string parentFrameId;
 
 // Subs - Pubs
 static ros::Subscriber imageSub;
 static ros::Subscriber cameraInfoSub;
 static std::vector<ros::Publisher> pubOdom;
+static std::vector<ros::Publisher> pubPixel;
+static int pubPixelMode = 0;
 
 const int objectnum = 64;  // This is the amount of maximum possible marker IDs
 
@@ -51,9 +53,10 @@ static volatile bool setCameraInfo = false;
 
 // MarkerDetector
 static aruco::MarkerDetector MDetector;
-static std::map<uint32_t, aruco::MarkerPoseTracker> MTracker;
+// static std::map<uint32_t, aruco::MarkerPoseTracker> MTracker;
 static int markerSize = 100; //in mm
 static bool show_threshold = false;
+static std::string configFile("");
 
 // Verbosity
 static int verbose = 0;
@@ -66,6 +69,7 @@ void callbackImage(sensor_msgs::ImageConstPtr msg);
 static void programOptions(ros::NodeHandle &n);
 
 void mainLoopTracking() {
+  std::map<uint32_t, aruco::MarkerPoseTracker> MTracker;
   // Ok, let's detect
   ros::Time t1 = ros::Time::now();
   std::vector<aruco::Marker> Markers = MDetector.detect(image, CamParam, markerSize, false);
@@ -101,17 +105,45 @@ void mainLoopTracking() {
     cv::imshow(windowName, image);
     cv::waitKey(1);
   }
+
   for (int i = 0; i < Markers.size(); i++) {
+
+    // Get the full 4x4 transformation (Note: translation is in mm)
+    cv::Mat rtMatrix = MTracker[Markers[i].id].getRTMatrix();
+
+    // Print the transformation matrix
+    std::stringstream ss;
+    ss << "rtMatrix of Marker " << Markers[i].id << "\n";
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+          const float value = rtMatrix.at<float>(x+4*y);
+          ss << value << "\t";
+        }
+        ss << std::endl;
+    }
+    ROS_DEBUG_STREAM(ss.str());
+
+    // Define the the message header
     nav_msgs::Odometry odom;
     odom.header = imageHeader;
     odom.child_frame_id = std::string("base_link/") + std::to_string(Markers[i].id);
-    odom.pose.pose.position.x = Markers[i].Tvec.at<float>(0, 0) / 1000.0;
-    odom.pose.pose.position.y = Markers[i].Tvec.at<float>(1, 0) / 1000.0;
-    odom.pose.pose.position.z = Markers[i].Tvec.at<float>(2, 0) / 1000.0;
-    tf::Quaternion quat(Markers[i].Rvec.at<float>(0, 0), Markers[i].Rvec.at<float>(1, 0), Markers[i].Rvec.at<float>(2, 0));
+
+    // Set the rotation
+    tf::Quaternion quat;
     geometry_msgs::Quaternion quatMsg;
+    const tf::Matrix3x3 R(rtMatrix.at<float>(0), rtMatrix.at<float>(1), rtMatrix.at<float>(2), 
+                          rtMatrix.at<float>(4), rtMatrix.at<float>(5), rtMatrix.at<float>(6), 
+                          rtMatrix.at<float>(8), rtMatrix.at<float>(9), rtMatrix.at<float>(10));
+    R.getRotation(quat);
     tf::quaternionTFToMsg(quat, quatMsg);
     odom.pose.pose.orientation = quatMsg;
+    
+    // Set the translation
+    odom.pose.pose.position.x = rtMatrix.at<float>(3) / 1000.0;
+    odom.pose.pose.position.y = rtMatrix.at<float>(7) / 1000.0;
+    odom.pose.pose.position.z = rtMatrix.at<float>(11) / 1000.0;
+
+    // Set fixed covariances
     const boost::array<double, 36> covariance = {{
                                                    .1, 0, 0, 0, 0, 0,
                                                    0, .1, 0, 0, 0, 0,
@@ -120,7 +152,18 @@ void mainLoopTracking() {
                                                    0, 0, 0, 0, .01, 0,
                                                    0, 0, 0, 0, 0, .01}};
     odom.pose.covariance = covariance;
+
+    // Publish
     pubOdom.at(Markers[i].id).publish(odom);
+
+    if(pubPixelMode) {
+      nav_msgs::Odometry pixel;
+      pixel.header = imageHeader;
+      pixel.child_frame_id = std::string("base_link/") + std::to_string(Markers[i].id);
+      pixel.pose.pose.position.x = Markers[i].getCenter().x;
+      pixel.pose.pose.position.y = Markers[i].getCenter().y;
+      pubPixel.at(Markers[i].id).publish(pixel);
+    }
   }
 }
 
@@ -145,12 +188,19 @@ void initArucoParams() {
 
   CamParam.setParams(cameraMatrix, distorsionCoeff, cv::Size(cameraInfo.height, cameraInfo.width));
 
-  if (dictionary_type == "ARUCO" || dictionary_type == "ARUCO_MIP_36h12" || dictionary_type == "TAG36h11" || dictionary_type == "ALL_DICTS") {
-    MDetector.setDictionary(aruco::Dictionary::getTypeFromString(dictionary_type), 0.f);
+  if (!configFile.empty()) {
+    MDetector.loadParamsFromFile(configFile);
   } else {
-    MDetector.setDictionary(dictionary_type, 0.f);
+    if (dictionary_type == "ARUCO" || dictionary_type == "ARUCO_MIP_36h12" || dictionary_type == "TAG36h11" || dictionary_type == "ALL_DICTS") {
+      MDetector.setDictionary(aruco::Dictionary::getTypeFromString(dictionary_type), 0.f);
+    } else {
+      MDetector.setDictionary(dictionary_type, 0.f);
+    }
+    // Note: These are very conservative parameters to get the best results out of the tracker
+    MDetector.getParameters().detectEnclosedMarkers(false);
+    MDetector.getParameters().setDetectionMode(aruco::DetectionMode::DM_NORMAL, 0.f);
+    MDetector.getParameters().setCornerRefinementMethod(aruco::CornerRefinementMethod::CORNER_LINES);
   }
-
   setCameraInfo = true;
 }
 
@@ -158,15 +208,18 @@ static void programOptions(ros::NodeHandle &n) {
   n.param<std::string>("topic_in_image", topicInImage, "/genicam/cam4"); // Video parameter for the camera
   n.param<std::string>("image_camera_info", topicCameraInfo, "/genicam/camera_info"); // Camera info for the image
   n.param<std::string>("topic_out_odom", topicOutOdom, "/odom"); // scope for sending the odometries
+  n.param<std::string>("topic_out_pixel", topicOutPixel, "/pixel"); // scope for sending the pixel data
   n.param<int>("gui", gui, 0); // Show the rectified image by OpenCV
   n.param<int>("draw_cube", drawCube, 0); // Draw cubes on detected marker
   n.param<int>("draw_axis", drawAxis, 0); // Draw axis on detected marker
-  n.param<string>("window_name", windowName, ros::this_node::getName()); // Window Name
+  n.param<std::string>("window_name", windowName, ros::this_node::getName()); // Window Name
   n.param<int>("marker_size", markerSize, 100); // Marker Size in mm
-  n.param<string>("dictionary", dictionary_type, "ARUCO"); // Default Dictionarytype: ARUCO,ARUCO_MIP_36h12 or Path to custom dictionary .dict-File
+  n.param<std::string>("dictionary", dictionary_type, "ARUCO"); // Default Dictionarytype: ARUCO,ARUCO_MIP_36h12 or Path to custom dictionary .dict-File
+  n.param<std::string>("config_file", configFile, ""); // Default config which overwrites all set parameters
   n.param<int>("verbose", verbose, 0); // Verbosity
   n.param<int>("fps", fps, 15); // FPS
   n.param<bool>("show_threshhold", show_threshold, 0); // Show Threshhold
+  n.param<int>("pub_pixel", pubPixelMode, 0);
 }
 
 void callbackCameraInfo(sensor_msgs::CameraInfo msg) {
@@ -204,10 +257,17 @@ int main(int argc, char **argv) {
 
   // Allocate the publisher for the maximum number of markers
   pubOdom.resize(objectnum);
+  pubPixel.resize(objectnum);
   int idx = 0;
   for (auto it = pubOdom.begin(); it != pubOdom.end(); ++it, ++idx) {
     std::stringstream ss;
     ss << n.getNamespace() << std::string("/") << topicOutOdom << std::string("/") << idx;
+    *it = n.advertise<nav_msgs::Odometry>(ss.str(), 1);
+  }
+  idx = 0;
+  for (auto it = pubPixel.begin(); it != pubPixel.end(); ++it, ++idx) {
+    std::stringstream ss;
+    ss << n.getNamespace() << std::string("/") << topicOutPixel << std::string("/") << idx;
     *it = n.advertise<nav_msgs::Odometry>(ss.str(), 1);
   }
 
