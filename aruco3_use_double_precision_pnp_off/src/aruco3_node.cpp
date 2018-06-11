@@ -105,16 +105,40 @@ void mainLoopTracking() {
   }
 
   for (int i = 0; i < Markers.size(); i++) {
+    // Get the full 4x4 transformation (Note: translation is in mm)
+    cv::Mat rtMatrix = MTracker[Markers[i].id].getRTMatrix();
+
+    // Print the transformation matrix
+    std::stringstream ss;
+    ss << "rtMatrix of Marker " << Markers[i].id << "\n";
+    for (int y = 0; y < 4; y++) {
+      for (int x = 0; x < 4; x++) {
+        const float value = rtMatrix.at<float>(x+4*y);
+        ss << value << "\t";
+      }
+      ss << std::endl;
+    }
+    ROS_DEBUG_STREAM(ss.str());
+
     nav_msgs::Odometry odom;
     odom.header = imageHeader;
     odom.child_frame_id = std::string("base_link/") + std::to_string(Markers[i].id);
-    odom.pose.pose.position.x = Markers[i].Tvec.at<float>(0) / 1000.0;
-    odom.pose.pose.position.y = Markers[i].Tvec.at<float>(1) / 1000.0;
-    odom.pose.pose.position.z = Markers[i].Tvec.at<float>(2) / 1000.0;
-    tf::Quaternion quat(Markers[i].Rvec.at<float>(0), Markers[i].Rvec.at<float>(1), Markers[i].Rvec.at<float>(2));
+
+    // Set the rotation
+    tf::Quaternion quat;
     geometry_msgs::Quaternion quatMsg;
+    const tf::Matrix3x3 R(rtMatrix.at<float>(0), rtMatrix.at<float>(1), rtMatrix.at<float>(2),
+                          rtMatrix.at<float>(4), rtMatrix.at<float>(5), rtMatrix.at<float>(6),
+                          rtMatrix.at<float>(8), rtMatrix.at<float>(9), rtMatrix.at<float>(10));
+    R.getRotation(quat);
     tf::quaternionTFToMsg(quat, quatMsg);
     odom.pose.pose.orientation = quatMsg;
+
+    // Set the translation
+    odom.pose.pose.position.x = rtMatrix.at<float>(3) / 1000.0;
+    odom.pose.pose.position.y = rtMatrix.at<float>(7) / 1000.0;
+    odom.pose.pose.position.z = rtMatrix.at<float>(11) / 1000.0;
+
     const boost::array<double, 36> covariance = {{
                                                    .1, 0, 0, 0, 0, 0,
                                                    0, .1, 0, 0, 0, 0,
