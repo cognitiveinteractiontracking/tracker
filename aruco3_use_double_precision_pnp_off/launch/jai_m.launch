@@ -2,10 +2,9 @@
 <launch>
 
   <arg name="CAM" default="3"/>
-  <arg name="marker_size" default="100"/>
   <arg name="dictionary" default="ARUCO_MIP_36h12"/>
 
-  <node type="aruco3_node" name="aruco3_node$(arg CAM)_2" pkg="aruco3" respawn="false" output="screen">
+  <node type="aruco3_use_double_precision_pnp_off_node" name="aruco3_use_double_precision_pnp_off_node$(arg CAM)_2" pkg="aruco3_use_double_precision_pnp_off" respawn="false" output="screen">
     <param name="topic_in_image" type="string" value="/genicam_cam$(arg CAM)/image_raw"/>
     <param name="image_camera_info" type="string" value="/genicam_cam$(arg CAM)/camera_info"/>
     <param name="topic_out_odom" type="string" value="/cam/odom"/>
@@ -14,7 +13,7 @@
     <param name="gui" value="1"/>
     <param name="draw_cube" value="0"/>
     <param name="draw_axis" value="0"/>
-    <param name="marker_size" value="$(arg marker_size)"/>
+    <param name="marker_size" value="100"/>
     <!--<param name="dictionary" value="$(find aruco2)/dictionary/armarker_parity.dict"/>-->
     <!--<param name="dictionary" value="ARUCO_MIP_36h12"/>-->
     <param name="dictionary" value="$(arg dictionary)"/>

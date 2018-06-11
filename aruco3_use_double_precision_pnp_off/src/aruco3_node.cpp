@@ -53,10 +53,9 @@ static volatile bool setCameraInfo = false;
 
 // MarkerDetector
 static aruco::MarkerDetector MDetector;
-// static std::map<uint32_t, aruco::MarkerPoseTracker> MTracker;
+static std::map<uint32_t, aruco::MarkerPoseTracker> MTracker;
 static int markerSize = 100; //in mm
 static bool show_threshold = false;
-static std::string configFile("");
 
 // Verbosity
 static int verbose = 0;
@@ -69,7 +68,6 @@ void callbackImage(sensor_msgs::ImageConstPtr msg);
 static void programOptions(ros::NodeHandle &n);
 
 void mainLoopTracking() {
-  std::map<uint32_t, aruco::MarkerPoseTracker> MTracker;
   // Ok, let's detect
   ros::Time t1 = ros::Time::now();
   std::vector<aruco::Marker> Markers = MDetector.detect(image, CamParam, markerSize, false);
@@ -159,19 +157,12 @@ void initArucoParams() {
 
   CamParam.setParams(cameraMatrix, distorsionCoeff, cv::Size(cameraInfo.height, cameraInfo.width));
 
-  if (!configFile.empty()) {
-    MDetector.loadParamsFromFile(configFile);
+  if (dictionary_type == "ARUCO" || dictionary_type == "ARUCO_MIP_36h12" || dictionary_type == "TAG36h11" || dictionary_type == "ALL_DICTS") {
+    MDetector.setDictionary(aruco::Dictionary::getTypeFromString(dictionary_type), 0.f);
   } else {
-    if (dictionary_type == "ARUCO" || dictionary_type == "ARUCO_MIP_36h12" || dictionary_type == "TAG36h11" || dictionary_type == "ALL_DICTS") {
-      MDetector.setDictionary(aruco::Dictionary::getTypeFromString(dictionary_type), 0.f);
-    } else {
-      MDetector.setDictionary(dictionary_type, 0.f);
-    }
-    // Note: These are very conservative parameters to get the best results out of the tracker
-    MDetector.getParameters().detectEnclosedMarkers(false);
-    MDetector.getParameters().setDetectionMode(aruco::DetectionMode::DM_NORMAL, 0.f);
-    MDetector.getParameters().setCornerRefinementMethod(aruco::CornerRefinementMethod::CORNER_LINES);
+    MDetector.setDictionary(dictionary_type, 0.f);
   }
+
   setCameraInfo = true;
 }
 
@@ -183,10 +174,9 @@ static void programOptions(ros::NodeHandle &n) {
   n.param<int>("gui", gui, 0); // Show the rectified image by OpenCV
   n.param<int>("draw_cube", drawCube, 0); // Draw cubes on detected marker
   n.param<int>("draw_axis", drawAxis, 0); // Draw axis on detected marker
-  n.param<std::string>("window_name", windowName, ros::this_node::getName()); // Window Name
+  n.param<string>("window_name", windowName, ros::this_node::getName()); // Window Name
   n.param<int>("marker_size", markerSize, 100); // Marker Size in mm
-  n.param<std::string>("dictionary", dictionary_type, "ARUCO"); // Default Dictionarytype: ARUCO,ARUCO_MIP_36h12 or Path to custom dictionary .dict-File
-  n.param<std::string>("config_file", configFile, ""); // Default config which overwrites all set parameters
+  n.param<string>("dictionary", dictionary_type, "ARUCO"); // Default Dictionarytype: ARUCO,ARUCO_MIP_36h12 or Path to custom dictionary .dict-File
   n.param<int>("verbose", verbose, 0); // Verbosity
   n.param<int>("fps", fps, 15); // FPS
   n.param<bool>("show_threshhold", show_threshold, 0); // Show Threshhold

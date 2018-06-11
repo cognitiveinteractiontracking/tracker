@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(aruco3)
+project(aruco3_use_double_precision_pnp_off)
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -16,7 +16,11 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(OpenCV 3.1 REQUIRED)
-find_package(aruco3 3.0.9 REQUIRED)
+
+#find_package(PkgConfig REQUIRED)
+#set(CMAKE_PREFIX_PATH "/opt/aruco-3.0.5")
+#pkg_check_modules(aruco REQUIRED)
+find_package(aruco3_use_double_precision_pnp_off REQUIRED)
 
 catkin_package(
 #  INCLUDE_DIRS include
@@ -30,9 +34,9 @@ include_directories(
   ${aruco_INCLUDE_DIRS}
 )
 
-add_executable(aruco3_node src/aruco3_node.cpp)
+add_executable(aruco3_use_double_precision_pnp_off_node src/aruco3_node.cpp)
 
-target_link_libraries(aruco3_node
+target_link_libraries(aruco3_use_double_precision_pnp_off_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${aruco_LIBS}

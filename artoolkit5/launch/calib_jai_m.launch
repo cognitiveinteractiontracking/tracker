@@ -4,6 +4,7 @@
   <arg name="CAM" default="3"/>
   <!--<arg name="camera_parameter_ns" default="config"/>-->
   <arg name="LOC" default="$(find artoolkit5)"/>
+  <arg name="marker_size" default="100"/>
 
   <node type="artoolkit5_node" name="artoolkit5_cam$(arg CAM)_2" pkg="artoolkit5" respawn="true" output="screen">
     <param name="gui" value="1" />
@@ -11,7 +12,7 @@
     <param name="cpara" type="string" value="$(arg LOC)/calib/5000M_f8mm_2560x2048.dat" />
     <param name="topic_out_odom" type="string" value="/cam/odom" />
     <param name="topic_out_pixel" type="string" value="/cam/pixel" />
-    <param name="patt_width" value="100" />
+    <param name="patt_width" value="$(arg marker_size)" />
     <param name="patt_ratio" value="0.5" />
 <!--     <param name="patt_size" value="16" /> -->
 <!--     <param name="patt_count_max" value="50" /> -->
@@ -22,7 +23,7 @@
     <param name="log_level" type="string" value="INFO" />
     <param name="labeling_thresh_mode" type="string" value="AR_LABELING_THRESH_MODE_AUTO_OTSU" />
     <param name="window_name" type="string" value="cam$(arg CAM)" />
-    <param name="parent_frame_id" type="string" value="cam$(arg CAM)_2" />
+    <!--<param name="parent_frame_id" type="string" value="cam$(arg CAM)_2" />-->
     <param name="multimarker_patt_names" type="string" value="$(find artoolkit5)/Data/multi-barcode-twb_4x2_A0.dat" />
   </node>
 </launch>

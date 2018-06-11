@@ -27,13 +27,15 @@
 using namespace std;
 
 // Topics for the data
-static string topicInImage, topicOutOdom, topicCameraInfo;
+static string topicInImage, topicOutOdom, topicOutPixel, topicCameraInfo;
 static string parentFrameId;
 
 // Subs - Pubs
 static ros::Subscriber imageSub;
 static ros::Subscriber cameraInfoSub;
 static std::vector<ros::Publisher> pubOdom;
+static std::vector<ros::Publisher> pubPixel;
+static int pubPixelMode = 0;
 
 // CameraParameter
 static sensor_msgs::CameraInfo cameraInfo;
@@ -75,7 +77,8 @@ void initIclParameter();
 void initBoostBimap();
 static void programOptions(ros::NodeHandle &n);
 void run();
-void publishMarker(const int &id, const geom::Vec &trans3d, const geom::Vec &rot3d);
+void publishMarker2d(const int &id, const utils::Point32f center, const float rot);
+void publishMarker3d(const int &id, const geom::Vec &trans3d, const geom::Vec &rot3d);
 
 void mainLoopTracking() {
 
@@ -104,12 +107,13 @@ void mainLoopTracking() {
     if (markerType == "icl1" && iclValidMarker.right.find(id)->second >= objectnum) {
       continue;
 
-    }
-    else if (markerType != "icl1" && id >= objectnum)
+    } else if (markerType != "icl1" && id >= objectnum)
       continue;
 
     utils::Point32f c = fids[i].getCenter2D();
     float rot = fids[i].getRotation2D();
+    if (pubPixelMode)
+      publishMarker2d(id, c, rot);
 
     const std::vector<Fiducial::KeyPoint> &kps = fids[i].getKeyPoints2D();
     int n = (int) kps.size();
@@ -122,7 +126,7 @@ void mainLoopTracking() {
         ROS_INFO_STREAM("[" << ros::this_node::getName() << "] " << "id: " << id << " = "
                             << "(" << trans3d.x << ", " << trans3d.y << ", " << trans3d.z << ")"
                             << "(" << rot3d.x << ", " << rot3d.y << ", " << rot3d.z << ")");
-        publishMarker(id, trans3d, rot3d);
+        publishMarker3d(id, trans3d, rot3d);
       }
 
       if (draw3dAxis) {
@@ -149,7 +153,22 @@ void mainLoopTracking() {
   }
 }
 
-void publishMarker(const int &id, const geom::Vec &trans3d, const geom::Vec &rot3d) {
+void publishMarker2d(const int &id, const utils::Point32f center, const float rot) {
+  nav_msgs::Odometry pixel;
+  pixel.header = imageHeader;
+  pixel.child_frame_id = std::string("base_link/") + std::to_string(id);
+  pixel.pose.pose.position.x = center.x;
+  pixel.pose.pose.position.y = center.y;
+  pixel.pose.pose.orientation.z = rot;
+  pixel.pose.pose.orientation.w = 1;
+
+  if (markerType == "icl1")
+    pubPixel.at(iclValidMarker.right.find(id)->second).publish(pixel);
+  else
+    pubPixel.at(id).publish(pixel);
+}
+
+void publishMarker3d(const int &id, const geom::Vec &trans3d, const geom::Vec &rot3d) {
 
   // euler to quat
   tf::Quaternion quaternion = tf::createQuaternionFromRPY(rot3d.x, rot3d.y, rot3d.z);
@@ -157,9 +176,9 @@ void publishMarker(const int &id, const geom::Vec &trans3d, const geom::Vec &rot
   nav_msgs::Odometry odom;
   odom.header = imageHeader;
   odom.child_frame_id = std::string("base_link/") + std::to_string(id);
-  odom.pose.pose.position.x = trans3d.x/1000.0;
-  odom.pose.pose.position.y = trans3d.y/1000.0;
-  odom.pose.pose.position.z = trans3d.z/1000.0;
+  odom.pose.pose.position.x = trans3d.x / 1000.0;
+  odom.pose.pose.position.y = trans3d.y / 1000.0;
+  odom.pose.pose.position.z = trans3d.z / 1000.0;
   odom.pose.pose.orientation.x = quaternion.getX();
   odom.pose.pose.orientation.y = quaternion.getY();
   odom.pose.pose.orientation.z = quaternion.getZ();
@@ -219,6 +238,7 @@ static void programOptions(ros::NodeHandle &n) {
   n.param<std::string>("topic_in_image", topicInImage, "/genicam/cam4"); // Video parameter for the camera
   n.param<std::string>("image_camera_info", topicCameraInfo, "/genicam/camera_info"); // Camera info for the image
   n.param<std::string>("topic_out_odom", topicOutOdom, "/odom"); // scope for sending the odometries
+  n.param<std::string>("topic_out_pixel", topicOutPixel, "/pixel"); // scope for sending the pixel data
   n.param<string>("window_name", windowName, ros::this_node::getName()); // Window Name
   n.param<string>("marker_type", markerType, "bch"); // Available marker types: bch, icl1, art
   n.param<int>("marker_size", markerSize, 100); // Marker Size in mm
@@ -228,6 +248,7 @@ static void programOptions(ros::NodeHandle &n) {
   n.param<int>("verbose", verbose, 0); // more debug output
   n.param<int>("draw3d_axis", draw3dAxis, 0);
   n.param<int>("mono_color", monocolor, 1);
+  n.param<int>("pub_pixel", pubPixelMode, 0);
 
   if (markerType != "bch" && markerType != "icl1") {
     ROS_WARN("[%s] Markertype \"%s\" is not a valid markertype. Valid markertypes are: bch, icl1.", ros::this_node::getName().c_str(), markerType.c_str());
@@ -330,6 +351,7 @@ int main(int argc, char **argv) {
 
   // Allocate the publisher for the maximum number of markers
   pubOdom.resize(objectnum);
+  pubPixel.resize(objectnum);
   int idx = 0;
   for (auto it = pubOdom.begin(); it != pubOdom.end(); ++it, ++idx) {
     std::stringstream ss;
@@ -338,6 +360,17 @@ int main(int argc, char **argv) {
       id = iclValidMarker.left.at(idx);
 
     ss << n.getNamespace() << std::string("/") << topicOutOdom << std::string("/") << id;
+
+    *it = n.advertise<nav_msgs::Odometry>(ss.str(), 1);
+  }
+  idx = 0;
+  for (auto it = pubPixel.begin(); it != pubPixel.end(); ++it, ++idx) {
+    std::stringstream ss;
+    int id = idx;
+    if (markerType == "icl1")
+      id = iclValidMarker.left.at(idx);
+
+    ss << n.getNamespace() << std::string("/") << topicOutPixel << std::string("/") << id;
 
     *it = n.advertise<nav_msgs::Odometry>(ss.str(), 1);
   }
