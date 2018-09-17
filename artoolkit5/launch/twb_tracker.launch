@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+  <!--START THE TWB TRACKER-->
+  <include file="$(find artoolkit5)/launch/example.launch"><arg name="CAM" value="1" /></include>
+  <include file="$(find artoolkit5)/launch/example.launch"><arg name="CAM" value="2" /></include>
+  <include file="$(find artoolkit5)/launch/example.launch"><arg name="CAM" value="3" /></include>
+  <include file="$(find artoolkit5)/launch/example.launch"><arg name="CAM" value="4" /></include>
+</launch>  

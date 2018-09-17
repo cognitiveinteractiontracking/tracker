@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Icl Marker: 1294  1252  1287  1035  1245  993  1292 1250  1280  1028  1208  776  1238  986  1166  734  1285  1033  1243  991  1273 1021  1201  769  949  517  1231  979  1159  727  907  475.-->
+  <arg name="CAM" default="3"/>
+  <arg name="markertype" default="bch"/>
+
+  <node type="icl_node" name="icl_node$(arg CAM)_2" pkg="icl" respawn="false" output="screen">
+    <param name="topic_in_image" type="string" value="/genicam_cam$(arg CAM)/image_raw"/>
+    <param name="image_camera_info" type="string" value="/genicam_cam$(arg CAM)/camera_info"/>
+    <param name="topic_out_odom" type="string" value="/cam/odom"/>
+    <param name="topic_out_pixel" type="string" value="/cam/pixel"/>
+    <param name="pub_pixel" value="1"/>
+    <param name="fps" value="21"/>
+    <param name="mono_color" value="1"/>
+    <param name="marker_type" value="$(arg markertype)"/>
+    <param name="marker_size" value="100"/>
+    <param name="fid_config" value="$(find icl)/config/fid_config.xml"/>
+    <param name="focal_length" value="8"/>
+    <param name="draw3d_axis" value="0"/>
+    <param name="verbose" value="1"/>
+  </node>
+</launch>
