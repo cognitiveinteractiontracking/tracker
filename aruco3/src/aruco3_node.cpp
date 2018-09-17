@@ -80,6 +80,10 @@ void mainLoopTracking() {
   if (verbose)
     ROS_INFO_STREAM("[" << ros::this_node::getName() << "] " << "time fid:" << d << "[s]");
 
+  if (gui && show_threshold) {
+    cv::Mat thresh_img = MDetector.getThresholdedImage();
+    cv::imshow("thresh", thresh_img);
+  }
   for (auto &marker:Markers) {//for each marker
     bool pose_bool = MTracker[marker.id].estimatePose(marker, CamParam, markerSize, 1.0); //call its tracker and estimate the pose // 1.0 is the minErrorRation
     if (verbose) {
@@ -122,6 +126,7 @@ void mainLoopTracking() {
         ss << value << "\t";
       }
       ss << std::endl;
+
     }
     ROS_DEBUG_STREAM(ss.str());
 
@@ -139,7 +144,6 @@ void mainLoopTracking() {
     R.getRotation(quat);
     tf::quaternionTFToMsg(quat, quatMsg);
     odom.pose.pose.orientation = quatMsg;
-
     // Set the translation
     odom.pose.pose.position.x = rtMatrix.at<float>(3) / 1000.0;
     odom.pose.pose.position.y = rtMatrix.at<float>(7) / 1000.0;

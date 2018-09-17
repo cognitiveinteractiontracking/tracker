@@ -110,7 +110,6 @@ void mainLoopTracking() {
     } else if (markerType != "icl1" && id >= objectnum)
       continue;
 
-
     utils::Point32f c = fids[i].getCenter2D();
     float rot = fids[i].getRotation2D();
 
@@ -163,6 +162,7 @@ void publishMarker2d(const int &id, const utils::Point32f center, const geom::Ve
   pixel.child_frame_id = std::string("base_link/") + std::to_string(id);
   pixel.pose.pose.position.x = center.x;
   pixel.pose.pose.position.y = center.y;
+  pixel.pose.pose.position.z = 0;
   pixel.pose.pose.position.z = 0;
   pixel.pose.pose.orientation.x = quaternion.getX();
   pixel.pose.pose.orientation.y = quaternion.getY();
