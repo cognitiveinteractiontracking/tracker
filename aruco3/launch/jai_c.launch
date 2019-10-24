@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="CAM" default="5"/>
+  <arg name="marker_size" default="100"/>
+  <arg name="dictionary" default="TAG16h5"/>
+  <arg name="gui" default="1"/>
+  <arg name="show_threshold" default="0"/>
+
+<!--  Available Dictionariytypes:
+  ALL_DICTS,
+  ARUCO, ARUCO_MIP_36h12, ARUCO_MIP_25h7, ARUCO_MIP_16h3,
+  ARTAG, ARTOOLKITPLUS, ARTOOLKITPLUSBCH,
+  TAG16h5, TAG25h7, TAG25h9, TAG36h11, TAG36h10, CHILITAGS-->
+
+  <node type="aruco3_node" name="aruco3_node$(arg CAM)_2" pkg="aruco3" respawn="false" output="screen">
+    <param name="topic_in_image" type="string" value="/genicam_cam$(arg CAM)/image_raw"/>
+    <param name="image_camera_info" type="string" value="/genicam_cam$(arg CAM)/camera_info"/>
+    <param name="topic_out_odom" type="string" value="/cam/odom"/>
+    <param name="topic_out_pixel" type="string" value="/cam/pixel"/>
+    <param name="pub_pixel" value="1"/>
+    <param name="gui" value="$(arg gui)"/>
+    <param name="draw_cube" value="0"/>
+    <param name="draw_axis" value="0"/>
+    <param name="marker_size" value="$(arg marker_size)"/>
+    <!--<param name="dictionary" value="$(find aruco2)/dictionary/armarker_parity.dict"/>-->
+    <!--<param name="dictionary" value="ARUCO_MIP_36h12"/>-->
+    <param name="dictionary" value="$(arg dictionary)"/>
+    <!--<param name="dictionary" value="TAG36h11"/>-->
+    <!--<param name="dictionary" value="ALL_DICTS"/>-->
+    <param name="verbose" value="1"/>
+    <param name="fps" value="50"/>
+    <param name="show_threshold" value="$(arg show_threshold)"/>
+    <param name="threshold" value="11"/>
+    <param name="error_correction_rate" value="0.3"/> <!--error_correction_rate value indicating the correction error allowed. Is in range [0,1]. 0 means no correction at all. So an erroneous bit will result in discarding the marker. 1, mean full correction. The maximum number of bits that can be corrected depends on each ditionary. We recommend using values from 0 to 0.5. (in general, this will allow up to 3 bits or correction).-->
+  </node>
+</launch>

@@ -37,6 +37,7 @@ static int drawCube = 0;
 static int drawAxis = 0;
 static int fps = 30;
 static string windowName = "ArUco3 Tracker";
+static string windowNameTresh = "ArUco3 Tracker";
 
 // Image
 static cv::Mat image;
@@ -79,11 +80,6 @@ void mainLoopTracking() {
   ros::Duration d = t2 - t1;
   if (verbose)
     ROS_INFO_STREAM("[" << ros::this_node::getName() << "] " << "time fid:" << d << "[s]");
-
-  if (gui && show_threshold) {
-    cv::Mat thresh_img = MDetector.getThresholdedImage();
-    cv::imshow("thresh", thresh_img);
-  }
   for (auto &marker:Markers) {//for each marker
     bool pose_bool = MTracker[marker.id].estimatePose(marker, CamParam, markerSize, 1.0); //call its tracker and estimate the pose // 1.0 is the minErrorRation
     if (verbose) {
@@ -106,7 +102,7 @@ void mainLoopTracking() {
     }
     if (show_threshold) {
       cv::Mat thresh_img = MDetector.getThresholdedImage();
-      cv::imshow(windowName + "_threshold", thresh_img);
+      cv::imshow(windowNameTresh, thresh_img);
     }
     cv::imshow(windowName, image);
     cv::waitKey(1);
@@ -295,8 +291,9 @@ int main(int argc, char **argv) {
 
   if (gui) {
     cv::namedWindow(windowName, CV_WINDOW_FREERATIO);
+    windowNameTresh = windowName + "_treshold";
     if (show_threshold)
-      cv::namedWindow(windowName + "_threshold", CV_WINDOW_FREERATIO);
+      cv::namedWindow(windowNameTresh, CV_WINDOW_FREERATIO);
   }
   ros::Rate rate(fps);
   while (ros::ok()) {
