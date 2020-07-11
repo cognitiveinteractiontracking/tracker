@@ -18,7 +18,6 @@
     <!--<param name="dictionary" value="$(find aruco2)/dictionary/armarker_parity.dict"/>-->
     <!--<param name="dictionary" value="ARUCO_MIP_36h12"/>-->
     <param name="dictionary" value="$(arg dictionary)"/>
-    <param name="verbose" value="0"/>
     <param name="fps" value="50"/>
     <param name="show_threshhold" value="0"/>
   </node>

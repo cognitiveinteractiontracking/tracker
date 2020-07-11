@@ -28,7 +28,6 @@
     <param name="dictionary" value="$(arg dictionary)"/>
     <!--<param name="dictionary" value="TAG36h11"/>-->
     <!--<param name="dictionary" value="ALL_DICTS"/>-->
-    <param name="verbose" value="1"/>
     <param name="fps" value="50"/>
     <param name="show_threshold" value="$(arg show_threshold)"/>
     <param name="threshold" value="11"/>

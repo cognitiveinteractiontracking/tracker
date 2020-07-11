@@ -57,9 +57,6 @@ static aruco::MarkerDetector MDetector;
 static int markerSize = 100; //in mm
 static bool show_threshold = false;
 
-// Verbosity
-static int verbose = 0;
-
 // Prototypes
 void initArucoParams();
 void mainLoopTracking();
@@ -74,8 +71,7 @@ void mainLoopTracking() {
   std::vector<aruco::Marker> Markers = MDetector.detect(image, CamParam, markerSize, false);
   ros::Time t2 = ros::Time::now();
   ros::Duration d = t2 - t1;
-  if (verbose)
-    ROS_INFO_STREAM("[" << ros::this_node::getName() << "] " << "time fid:" << d << "[s]");
+    ROS_DEBUG_STREAM("[" << ros::this_node::getName() << "] " << "time fid:" << d << "[s]");
 
   if (gui && show_threshold) {
     cv::Mat thresh_img = MDetector.getThresholdedImage();
@@ -83,9 +79,7 @@ void mainLoopTracking() {
   }
   for (auto &marker:Markers) {//for each marker
     bool pose_bool = MTracker[marker.id].estimatePose(marker, CamParam, markerSize, 1.0); //call its tracker and estimate the pose // 1.0 is the minErrorRation
-    if (verbose) {
-      ROS_INFO_STREAM("[" << ros::this_node::getName().c_str() << "] " << marker);
-    }
+    ROS_DEBUG_STREAM("[" << ros::this_node::getName().c_str() << "] " << marker);
   }
 
   if (gui) {
@@ -214,7 +208,6 @@ static void programOptions(ros::NodeHandle &n) {
   n.param<string>("window_name", windowName, ros::this_node::getName()); // Window Name
   n.param<int>("marker_size", markerSize, 100); // Marker Size in mm
   n.param<string>("dictionary", dictionary_type, "ARUCO"); // Default Dictionarytype: ARUCO,ARUCO_MIP_36h12 or Path to custom dictionary .dict-File
-  n.param<int>("verbose", verbose, 0); // Verbosity
   n.param<int>("fps", fps, 15); // FPS
   n.param<bool>("show_threshhold", show_threshold, 0); // Show Threshhold
   n.param<int>("pub_pixel", pubPixelMode, 0);
